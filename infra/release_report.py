@@ -114,7 +114,7 @@ def main():
     report = dict(
         recorded_at=datetime.now(UTC).isoformat(),
         version=version,
-        maturity="development-alpha",
+        maturity="development",
         full_spec_v2_complete=False,
         cloud_used=False,
         local_code_sha256=code.hexdigest(),
@@ -139,7 +139,7 @@ def main():
             "Same major 15–18; Python 3.12 / Linux ARM64 only",
             "Expanded DDL/queue is qualified for the documented profile; DO, compound/global/extension DDL and full SPEC object coverage remain incomplete",
             "Resync supports ordinary logged tables only; offline cleanup refuses unknown additional slots",
-            "Integrity baseline requires a fresh migration; no adoption of existing alpha state",
+            "Integrity baseline requires a fresh migration; no adoption of state without a baseline",
             "Small local datasets; no production qualification",
             "Persistent apply error test accelerates observation time in state, not PostgreSQL errors",
         ],

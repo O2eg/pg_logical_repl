@@ -5,6 +5,7 @@ def describe():
     commands = {}
     for name in [
         "validate",
+        "inspect-config",
         "check",
         "plan",
         "status",
@@ -68,7 +69,7 @@ def describe():
     )
     return dict(
         schema_version="pg_logical_connector/capabilities-v2",
-        maturity="development-alpha",
+        maturity="development",
         same_major_versions=[15, 16, 17, 18],
         data_plane="PostgreSQL pgoutput/publication/subscription",
         validation=dict(

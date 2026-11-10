@@ -26,23 +26,23 @@ BEGIN
   END IF;
   PERFORM set_config('lc.internal',(SELECT ownership_token FROM lc.control LIMIT 1),true);
   FOR cmd IN SELECT * FROM pg_event_trigger_ddl_commands() LOOP
-    IF cmd.in_extension OR EXISTS(SELECT FROM pg_depend WHERE classid=cmd.classid AND objid=cmd.objid AND deptype='e') THEN RAISE EXCEPTION 'logical_connector: extension member DDL is frozen' USING ERRCODE='LC001'; END IF;
+    IF cmd.in_extension OR EXISTS(SELECT FROM pg_depend WHERE classid=cmd.classid AND objid=cmd.objid AND deptype='e') THEN RAISE EXCEPTION 'pg-logical-repl: extension member DDL is frozen' USING ERRCODE='LC001'; END IF;
     IF cmd.schema_name='lc' OR cmd.schema_name ~ '^pg_' THEN
-      RAISE EXCEPTION 'logical_connector: system/temporary DDL is outside the application profile' USING ERRCODE='LC001';
+      RAISE EXCEPTION 'pg-logical-repl: system/temporary DDL is outside the application profile' USING ERRCODE='LC001';
     END IF;
     object_kind:=NULL; target:=NULL; object_owner:=NULL; object_acl:=NULL; aclkind:=NULL;
     IF cmd.classid='pg_class'::regclass THEN
       SELECT c.*,n.nspname,pg_get_userbyid(c.relowner) AS owner INTO rel FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.oid=cmd.objid;
       IF NOT FOUND THEN CONTINUE; END IF;
       IF EXISTS(SELECT FROM pg_depend WHERE classid=cmd.classid AND objid=cmd.objid AND deptype='e') THEN
-        RAISE EXCEPTION 'logical_connector: extension members are frozen' USING ERRCODE='LC001';
+        RAISE EXCEPTION 'pg-logical-repl: extension members are frozen' USING ERRCODE='LC001';
       END IF;
       is_new:=NOT before_rel @> to_jsonb(cmd.objid::bigint);
       target:=format('%I.%I',rel.nspname,rel.relname); object_owner:=rel.owner;
       IF rel.relkind IN ('r','p') THEN
         IF NOT cmd.objid=ANY(affected) THEN affected:=array_append(affected,cmd.objid); END IF;
         IF rel.relpersistence<>'p' OR (rel.relkind='r' AND rel.relam<>(SELECT oid FROM pg_am WHERE amname='heap')) OR (NOT rel.relispartition AND EXISTS(SELECT FROM pg_inherits WHERE inhrelid=cmd.objid)) THEN
-          RAISE EXCEPTION 'logical_connector: new/altered tables must be logged, without classical inheritance' USING ERRCODE='LC001';
+          RAISE EXCEPTION 'pg-logical-repl: new/altered tables must be logged, without classical inheritance' USING ERRCODE='LC001';
         END IF;
         object_kind:='TABLE'; aclkind:='r'; object_acl:=rel.relacl;
         IF is_new THEN
@@ -97,7 +97,7 @@ BEGIN
     ELSIF cmd.classid='pg_proc'::regclass AND TG_TAG IN ('CREATE FUNCTION','CREATE PROCEDURE') THEN
       SELECT p.*,n.nspname,l.lanpltrusted,pg_get_userbyid(p.proowner) AS owner INTO obj
         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace JOIN pg_language l ON l.oid=p.prolang WHERE p.oid=cmd.objid;
-      IF NOT obj.lanpltrusted THEN RAISE EXCEPTION 'logical_connector: untrusted function language is unsupported' USING ERRCODE='LC001'; END IF;
+      IF NOT obj.lanpltrusted THEN RAISE EXCEPTION 'pg-logical-repl: untrusted function language is unsupported' USING ERRCODE='LC001'; END IF;
       target:=format('%I.%I(%s)',obj.nspname,obj.proname,pg_get_function_identity_arguments(cmd.objid));
       object_kind:=CASE WHEN obj.prokind='p' THEN 'PROCEDURE' ELSE 'FUNCTION' END;
       object_owner:=obj.owner; object_acl:=obj.proacl; aclkind:='f';
@@ -109,7 +109,7 @@ BEGIN
       owners:=owners||jsonb_build_array(format('ALTER SCHEMA %s OWNER TO %I',target,object_owner));
     ELSIF cmd.classid='pg_type'::regclass AND TG_TAG IN ('CREATE TYPE','CREATE DOMAIN') THEN
       SELECT t.*,n.nspname,pg_get_userbyid(t.typowner) AS owner INTO obj FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace WHERE t.oid=cmd.objid;
-      IF obj.typtype NOT IN ('d','e') THEN RAISE EXCEPTION 'logical_connector: only enum/domain types are qualified' USING ERRCODE='LC001'; END IF;
+      IF obj.typtype NOT IN ('d','e') THEN RAISE EXCEPTION 'pg-logical-repl: only enum/domain types are qualified' USING ERRCODE='LC001'; END IF;
       object_kind:='TYPE'; target:=format('%I.%I',obj.nspname,obj.typname); object_owner:=obj.owner; object_acl:=obj.typacl; aclkind:='T';
       owners:=owners||jsonb_build_array(format('ALTER TYPE %s OWNER TO %I',target,object_owner));
     END IF;
@@ -132,13 +132,13 @@ BEGIN
         SELECT format('%I.%I',n.nspname,c.relname) INTO target FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.oid=id;
         action:=format('ALTER TABLE %s REPLICA IDENTITY FULL',target); EXECUTE action;
         owners:=owners||jsonb_build_array(action);
-      ELSE RAISE EXCEPTION 'logical_connector: DDL would remove replica identity or new table has no PK; configure new_tables_without_pk=replica_identity_full' USING ERRCODE='LC001'; END IF;
+      ELSE RAISE EXCEPTION 'pg-logical-repl: DDL would remove replica identity or new table has no PK; configure new_tables_without_pk=replica_identity_full' USING ERRCODE='LC001'; END IF;
     END IF;
     IF EXISTS(SELECT FROM pg_class WHERE oid=id AND relreplident='f') AND EXISTS(
       SELECT FROM pg_attribute a WHERE a.attrelid=id AND a.attnum>0 AND NOT a.attisdropped
       AND NOT EXISTS(SELECT FROM pg_opclass oc JOIN pg_am am ON am.oid=oc.opcmethod
         WHERE oc.opcdefault AND oc.opcintype=a.atttypid AND am.amname IN ('btree','hash'))) THEN
-      RAISE EXCEPTION 'logical_connector: REPLICA IDENTITY FULL requires qualified equality types' USING ERRCODE='LC001';
+      RAISE EXCEPTION 'pg-logical-repl: REPLICA IDENTITY FULL requires qualified equality types' USING ERRCODE='LC001';
     END IF;
   END LOOP;
   IF TG_TAG='ALTER TABLE' AND code ~ ' ADD (CONSTRAINT|CHECK|FOREIGN|UNIQUE|PRIMARY|EXCLUDE)( |\()' THEN
@@ -174,7 +174,7 @@ BEGIN
             CASE WHEN con.condeferrable THEN ' DEFERRABLE'||CASE WHEN con.condeferred THEN ' INITIALLY DEFERRED' ELSE '' END ELSE '' END),
           'table',con.target,'name',con.conname));
         replay:=NULL;
-      ELSE RAISE EXCEPTION 'logical_connector: this added constraint cannot be queued safely' USING ERRCODE='LC001'; END IF;
+      ELSE RAISE EXCEPTION 'pg-logical-repl: this added constraint cannot be queued safely' USING ERRCODE='LC001'; END IF;
     END LOOP;
   ELSIF TG_TAG='ALTER TABLE' AND code ~ ' VALIDATE CONSTRAINT ' THEN
     jobs:=jobs||jsonb_build_array(jsonb_build_object('kind','validate_constraint','statement',statement)); replay:=NULL;

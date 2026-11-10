@@ -5,7 +5,7 @@ checks, schema, and the migration lifecycle; PostgreSQL `tablesync`/`apply` work
 copy and apply rows. The runtime uses neither pgcopydb nor pgstream and has no
 custom WAL/DML engine.
 
-**The current version is development alpha `0.1.0a4`; the full SPEC v2 is not yet implemented.**
+**The current version is `0.2.0`.**
 Actual coverage and test results are documented in
 [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). Unsupported settings are
 rejected; `--capabilities` lists implemented commands and limitations.
@@ -21,6 +21,22 @@ python3.11 -m venv .venv
 The pip distribution and CLI command are named `pg-logical-repl`; the Python
 package is `pg_logical_repl`. The CLI also runs as `python -m pg_logical_repl`.
 
+Install the 0.2 release series from PyPI:
+
+```sh
+python -m pip install 'pg-logical-repl>=0.2.0,<0.3'
+```
+
+The wheel and source distribution include the public Markdown guides and the
+example configuration. After installation, locate the documentation with:
+
+```sh
+python -c 'import sysconfig; print(sysconfig.get_path("data") + "/share/doc/pg-logical-repl")'
+```
+
+See [packaging and release](docs/RELEASING.md) for archive checks and the
+Trusted Publisher workflow.
+
 When upgrading an environment from the previous package name, run
 `python -m pip uninstall pg-logical-connector`, then reinstall this project.
 Replace `pg_logical_connector` with `pg_logical_repl` in Python imports.
@@ -32,7 +48,7 @@ are also retained. Configuration, plan, and state files do not need to be rename
 
 The checks introduced in 0.1.0a3 require a new migration: `prepare` records the
 initial state of roles and internal resources. An active migration from an earlier
-alpha without this baseline receives `INTEGRITY_BASELINE_MISSING`; current roles
+release without this baseline receives `INTEGRITY_BASELINE_MISSING`; current roles
 and resources are not automatically accepted as a baseline. Finish an interrupted
 older migration using its corresponding version of the utility.
 
@@ -41,6 +57,20 @@ Their paths can be configured in `client_tools.bin_dirs`. Passwords are referenc
 through environment variables, a file with mode `0600`, or pgpass. Do not put
 passwords in YAML or command arguments. Internal files use mode `0600`; the state
 directory uses `0700`.
+
+## pg_play integration
+
+The optional pg_play integration uses `--contract pg_play/component/v2` and
+`--component-capabilities`. Native `--machine` output retains its existing format.
+`inspect-config` describes endpoints and the state directory without resolving
+credentials. pg_play 0.6.0 can orchestrate reviewed operations, durable controller
+sessions and migration experiments with workload, diagnostics and an independent
+oracle. See the [pg_play integration guide](https://github.com/O2eg/pg_play/blob/main/docs/pg_logical_repl-integration.md).
+
+Stopping the pg_play worker or this utility's Python process does not stop native
+replication. Pause, recovery, cutover, abort and cleanup retain their native plan
+and ownership checks. The laboratory PG16 image is named
+`pg-logical-repl/pgstand16:1.26.1`.
 
 ## Project structure
 
@@ -264,9 +294,6 @@ Use fully qualified names and one statement per CLI invocation. Unsupported
 classes, CASCADE, DO, nondeterministic rewrites, and operations exceeding limits
 are rejected. For the detailed matrix, settings, recovery, `queue skip` evidence,
 and profile limitations, see [DDL_IMPLEMENTATION.md](docs/DDL_IMPLEMENTATION.md).
-
-SQL resource version 2 requires a new migration; version 1 resources are not
-automatically upgraded in an active migration.
 
 ## Detaching the replica
 

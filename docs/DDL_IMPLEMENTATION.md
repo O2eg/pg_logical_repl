@@ -1,10 +1,7 @@
-# DDL and queue: implementation in 0.1.0a2
+# DDL and queue implementation
 
 Development and testing use a local pg-stand environment. No cloud endpoints were
-used. The SQL resource version is **2**. Older version 1 resources are not modified
-automatically: ownership checks stop such a run. Complete or abort an existing
-migration with the previous utility version first; upgrading an active journal
-remains separate work.
+used. The SQL resource version is **2**.
 
 ## Statement flow
 

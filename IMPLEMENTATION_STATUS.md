@@ -1,6 +1,6 @@
-# Implementation status — 2026-11-10
+# Implementation status — 2026-11-11
 
-The `pg-logical-repl` package, version `0.1.0a4`, is a working development alpha.
+The current `pg-logical-repl` package version is `0.2.0`.
 
 The pip package and CLI were renamed on 2026-11-10; Python imports use
 `pg_logical_repl`. Configuration, state, and JSON contract formats retain
@@ -10,6 +10,27 @@ The pip package and CLI were renamed on 2026-11-10; Python imports use
 
 Tests run in local pg-stand environments. Cloud and managed PostgreSQL services
 require separate qualification.
+
+## 0.2.0: pg_play integration and distribution
+
+Version 0.2.0 adds an optional pg_play component transport, capability discovery
+and credential-free configuration inspection. Native machine output, config/state
+formats and database ownership rules remain compatible. Laboratory image names
+and SQL diagnostic prefixes now use `pg-logical-repl`.
+
+Wheels and source distributions include the public Markdown guides and example
+configuration. The release workflow checks both archives, verifies installation
+outside the checkout, and publishes versioned tags through the PyPI Trusted
+Publisher. See [RELEASING.md](docs/RELEASING.md).
+
+Cross-project tests are in `tests/integration/test_pg_play.py`. They require the
+optional pg_play installation and an explicitly owned PostgreSQL stand. Test
+artifacts remain under `.runtime/`; they are excluded from the source repository.
+
+Native completion events include the operation's exact plan hash and resulting
+state, allowing pg_play to reconcile a lost response without replaying a completed
+stage. CLI logging releases only its own handlers and restores previous logger
+settings, including when used repeatedly by an embedding application or tests.
 
 ## 0.1.0a4: concurrent DDL and background validation
 

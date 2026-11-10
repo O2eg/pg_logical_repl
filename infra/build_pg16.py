@@ -12,7 +12,7 @@ args = parser.parse_args()
 image, _ = docker.from_env().images.build(
     path=str(Path(pg_stand.__file__).parent),
     dockerfile="docker/Dockerfile.pg13-pg17",
-    tag="pg-logical-connector/pgstand16:" + args.pgbouncer_version,
+    tag="pg-logical-repl/pgstand16:" + args.pgbouncer_version,
     buildargs={
         "POSTGRES_BASE_IMAGE": "postgres:16",
         "PG_MAJOR": "16",

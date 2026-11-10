@@ -9,7 +9,7 @@ import sys
 import uuid
 from pathlib import Path
 
-from . import __version__, ddl, ddl_queue, logging_config, recovery
+from . import __version__, component, ddl, ddl_queue, logging_config, recovery
 from .capabilities import describe
 from .config import load
 from .errors import ConfigurationError, ConnectorError
@@ -27,13 +27,15 @@ def parser():
     p = Parser(prog="pg-logical-repl")
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--capabilities", action="store_true")
+    p.add_argument("--component-capabilities", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--contract", choices=[component.CONTRACT], help=argparse.SUPPRESS)
     p.add_argument("--config", default=os.getenv("LC_CONFIG"))
     p.add_argument("--machine", action="store_true")
     p.add_argument("--request-id")
     p.add_argument("--log-level", choices=["debug", "info", "warning"], default="info")
     p.add_argument("--log-file")
     commands = p.add_subparsers(dest="command")
-    for name in ("validate", "check", "status", "report"):
+    for name in ("validate", "inspect-config", "check", "status", "report"):
         commands.add_parser(name)
     verify = commands.add_parser("verify")
     verify.add_argument("--table")
@@ -90,6 +92,20 @@ def parser():
 
 
 async def dispatch(args, service):
+    if args.command == "inspect-config":
+        return dict(
+            config_hash=service.config.hash,
+            migration_id=service.config.migration_id,
+            state_dir=str(service.config.state_dir),
+            ddl_mode=service.config.ddl_mode,
+            endpoints={
+                side: {
+                    key: service.config.endpoint(side)[key]
+                    for key in ("host", "port", "database", "user", "sslmode")
+                }
+                for side in ("source", "target")
+            },
+        )
     if args.command == "validate":
         return dict(valid=True, config_hash=service.config.hash)
     if args.command == "verify":
@@ -175,6 +191,11 @@ def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     redactor = Redactor()
     code = 0
+    pg_play = "--component-capabilities" in argv or any(
+        value == "--contract=" + component.CONTRACT
+        or (value == "--contract" and argv[index + 1 : index + 2] == [component.CONTRACT])
+        for index, value in enumerate(argv)
+    )
     envelope = dict(
         contract_version="pg_logical_connector/result-v2",
         tool="pg-logical-repl",
@@ -190,8 +211,12 @@ def main(argv=None):
     try:
         args = parser().parse_args(argv)
         envelope.update(command=args.command, request_id=args.request_id or envelope["request_id"])
-        if args.capabilities:
-            envelope.update(command="capabilities", result=describe())
+        if args.capabilities or args.component_capabilities:
+            envelope.update(
+                command="capabilities", result=component.capabilities() if pg_play else describe()
+            )
+            if pg_play:
+                envelope, code = component.envelope(envelope, code)
             print(json.dumps(envelope, ensure_ascii=False, indent=None if args.machine else 2))
             return 0
         if not args.command:
@@ -241,6 +266,8 @@ def main(argv=None):
             ),
         )
     envelope = redactor.clean(envelope)
+    if pg_play:
+        envelope, code = component.envelope(envelope, code)
     logging_config.close()
     print(json.dumps(envelope, ensure_ascii=False, default=str, indent=None if "--machine" in argv else 2))
     return code

@@ -1,0 +1,15 @@
+include pyproject.toml MANIFEST.in
+include README.md IMPLEMENTATION_STATUS.md
+include docs/DDL_IMPLEMENTATION.md docs/TESTING.md docs/RELEASING.md
+include examples/local.yaml
+include .github/workflows/publish.yml
+recursive-include tests *.py
+include tests/fixtures/quality/recovery.json
+recursive-include infra *.py *.yaml
+exclude todo.md docs/SPEC.md docs/SPEC_REVIEW.md docs/OPEN_SOURCE_REVIEW.md
+prune .runtime
+prune .pg_stand
+prune .venv
+prune build
+prune dist
+global-exclude __pycache__ *.py[cod] *.log *.pid *.pgpass *.key *.pem

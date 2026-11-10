@@ -18,10 +18,10 @@ BEGIN
         ELSIF substr(input,i,2)='*/' THEN depth:=depth-1; i:=i+2;
         ELSE i:=i+1; END IF;
       END LOOP;
-      IF depth<>0 THEN RAISE EXCEPTION 'logical_connector: unterminated SQL comment'; END IF;
+      IF depth<>0 THEN RAISE EXCEPTION 'pg-logical-repl: unterminated SQL comment'; END IF;
       result:=result||' '; CONTINUE;
     END IF;
-    IF ended THEN RAISE EXCEPTION 'logical_connector: exactly one top-level command is required' USING ERRCODE='LC001'; END IF;
+    IF ended THEN RAISE EXCEPTION 'pg-logical-repl: exactly one top-level command is required' USING ERRCODE='LC001'; END IF;
     IF ch=';' THEN ended:=true; i:=i+1; CONTINUE; END IF;
     IF ch IN (chr(39),'"') THEN
       quote:=ch; escaped:=quote=chr(39) AND (upper(substr(input,greatest(i-1,1),1))='E' OR current_setting('standard_conforming_strings')='off');
@@ -40,7 +40,7 @@ BEGIN
         IF quote='"' THEN result:=result||upper(ch); END IF;
         i:=i+1;
       END LOOP;
-      IF NOT closed THEN RAISE EXCEPTION 'logical_connector: unterminated SQL quote'; END IF;
+      IF NOT closed THEN RAISE EXCEPTION 'pg-logical-repl: unterminated SQL quote'; END IF;
       IF quote='"' THEN result:=result||'"'; END IF;
       CONTINUE;
     END IF;
@@ -50,7 +50,7 @@ BEGIN
       tag:=(regexp_match(substr(input,i),'^(\$[a-zA-Z_0-9]*\$)'))[1];
       IF tag IS NOT NULL THEN
         i:=i+length(tag); depth:=strpos(substr(input,i),tag);
-        IF depth=0 THEN RAISE EXCEPTION 'logical_connector: unterminated dollar quote'; END IF;
+        IF depth=0 THEN RAISE EXCEPTION 'pg-logical-repl: unterminated dollar quote'; END IF;
         i:=i+depth-1+length(tag); result:=result||'?'; CONTINUE;
       END IF;
     END IF;

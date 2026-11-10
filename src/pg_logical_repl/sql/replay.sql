@@ -3,25 +3,25 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
 DECLARE pair record; previous jsonb:='{}'; action text; job jsonb; item jsonb; seq int:=0; commands text[];
 BEGIN
   IF NEW.migration_id IS DISTINCT FROM (SELECT migration_id FROM lc.control LIMIT 1) OR NEW.capture_version<>2 THEN
-    RAISE EXCEPTION 'logical_connector: journal migration/version mismatch';
+    RAISE EXCEPTION 'pg-logical-repl: journal migration/version mismatch';
   END IF;
   IF encode(sha256(convert_to(NEW.statement,'UTF8')),'hex')<>NEW.statement_sha256 OR
      encode(sha256(convert_to(jsonb_build_array(2,NEW.statement,NEW.context,NEW.actions,NEW.queue_jobs)::text,'UTF8')),'hex')<>NEW.payload_sha256 THEN
-    RAISE EXCEPTION 'logical_connector: journal checksum mismatch for %',NEW.id;
+    RAISE EXCEPTION 'pg-logical-repl: journal checksum mismatch for %',NEW.id;
   END IF;
   IF EXISTS(SELECT FROM lc.ddl_applied WHERE id=NEW.id) THEN
     IF NOT EXISTS(SELECT FROM lc.ddl_applied WHERE id=NEW.id AND statement_sha256=NEW.statement_sha256) THEN
-      RAISE EXCEPTION 'logical_connector: journal identity conflict for %',NEW.id;
+      RAISE EXCEPTION 'pg-logical-repl: journal identity conflict for %',NEW.id;
     END IF;
     RETURN NEW;
   END IF;
   IF EXISTS(SELECT FROM lc.ddl_queue WHERE kind<>'refresh_publication' AND status NOT IN ('done','skipped')) THEN
-    RAISE EXCEPTION 'logical_connector: prior DDL queue dependency is not ready' USING ERRCODE='LC002';
+    RAISE EXCEPTION 'pg-logical-repl: prior DDL queue dependency is not ready' USING ERRCODE='LC002';
   END IF;
   SELECT array_agg(value) INTO commands FROM jsonb_array_elements_text(NEW.actions);
   FOR pair IN SELECT * FROM jsonb_each_text(NEW.context) LOOP
     IF pair.key NOT IN ('TimeZone','DateStyle','IntervalStyle','standard_conforming_strings','search_path','lock_timeout') THEN
-      RAISE EXCEPTION 'logical_connector: forbidden session setting';
+      RAISE EXCEPTION 'pg-logical-repl: forbidden session setting';
     END IF;
     previous:=previous||pg_catalog.jsonb_build_object(pair.key,pg_catalog.current_setting(pair.key));
     PERFORM pg_catalog.set_config(pair.key,pair.value,true);

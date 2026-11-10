@@ -107,7 +107,12 @@ class Service:
                     self.store.event("operation_interrupted", kind=kind, error=type(exc).__name__)
                     raise
                 else:
-                    self.store.event("operation_completed", kind=kind)
+                    self.store.event(
+                        "operation_completed",
+                        kind=kind,
+                        plan_hash=plan_hash,
+                        state=self.store.read()["state"],
+                    )
 
     async def state(self, name, sc=None, tc=None, **extra):
         s = self.store.read()

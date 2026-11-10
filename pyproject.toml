@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pg-logical-repl"
-version = "0.1.0a4"
+version = "0.2.0"
 description = "Plan-driven PostgreSQL native logical replication and schema orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,12 +16,30 @@ test = ["pytest>=8", "pytest-asyncio>=0.24", "hypothesis>=6", "ruff>=0.9", "buil
 [project.scripts]
 pg-logical-repl = "pg_logical_repl.cli:main"
 
+[project.urls]
+Repository = "https://github.com/O2eg/pg_logical_repl"
+Issues = "https://github.com/O2eg/pg_logical_repl/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = false
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["pg_logical_repl*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 pg_logical_repl = ["sql/*.sql"]
+
+[tool.setuptools.data-files]
+"share/doc/pg-logical-repl" = ["README.md", "IMPLEMENTATION_STATUS.md"]
+"share/doc/pg-logical-repl/docs" = [
+  "docs/DDL_IMPLEMENTATION.md",
+  "docs/TESTING.md",
+  "docs/RELEASING.md",
+]
+"share/doc/pg-logical-repl/examples" = ["examples/local.yaml"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
