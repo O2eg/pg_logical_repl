@@ -165,6 +165,6 @@ Further work is needed for supported DO/compound statement synthesis, exhaustive
 `sql_drop` metadata, complete volatility/rewrite qualification, SQL resource
 upgrades in active migrations, a general drift controller, and production workloads.
 
-Version coverage and validation results: [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md).
-Test commands and local JUnit report locations: [TESTING.md](TESTING.md).
+Version coverage, validation results, test commands and local JUnit report
+locations: [TESTING.md](TESTING.md).
 Test datasets are small; a local run does not measure production performance.

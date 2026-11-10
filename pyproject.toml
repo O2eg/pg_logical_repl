@@ -33,7 +33,7 @@ namespaces = false
 pg_logical_repl = ["sql/*.sql"]
 
 [tool.setuptools.data-files]
-"share/doc/pg-logical-repl" = ["README.md", "IMPLEMENTATION_STATUS.md"]
+"share/doc/pg-logical-repl" = ["README.md"]
 "share/doc/pg-logical-repl/docs" = [
   "docs/DDL_IMPLEMENTATION.md",
   "docs/TESTING.md",

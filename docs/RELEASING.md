@@ -3,11 +3,11 @@
 The distribution and executable are `pg-logical-repl`. The Python package is
 `pg_logical_repl`; Python 3.11+ is required. The current release is `0.2.0`.
 Supported scenarios and remaining limitations are documented in
-[IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md).
+[README.md](../README.md).
 
 ## Public documentation
 
-The wheel installs the README, implementation status, DDL/testing/release guides
+The wheel installs the README, DDL/testing/release guides
 and the example configuration under `share/doc/pg-logical-repl`, preserving
 their relative paths. Locate this directory in the installation environment:
 

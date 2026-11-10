@@ -95,7 +95,7 @@ def main():
 
     collect(creds)
     assert passwords, "No stand passwords found for the secret scan"
-    paths = [root / "README.md", root / "IMPLEMENTATION_STATUS.md", root / "pyproject.toml"]
+    paths = [root / "README.md", root / "pyproject.toml"]
     paths += [
         p
         for base in ["src", "tests", "infra", "docs"]

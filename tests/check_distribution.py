@@ -13,12 +13,11 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 GUIDES = (
     "README.md",
-    "IMPLEMENTATION_STATUS.md",
     "docs/DDL_IMPLEMENTATION.md",
     "docs/TESTING.md",
     "docs/RELEASING.md",
 )
-INTERNAL_NAMES = {"todo.md", "SPEC.md", "SPEC_REVIEW.md", "OPEN_SOURCE_REVIEW.md"}
+INTERNAL_NAMES = {"IMPLEMENTATION_STATUS.md", "todo.md", "SPEC.md", "SPEC_REVIEW.md", "OPEN_SOURCE_REVIEW.md"}
 RUNTIME_DIRECTORIES = {
     ".git",
     ".venv",

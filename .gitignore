@@ -59,6 +59,7 @@ Thumbs.db
 /docs/spike_pg*.json
 
 # Internal design documents and historical reviews
+/IMPLEMENTATION_STATUS.md
 /todo.md
 /docs/SPEC.md
 /docs/SPEC_REVIEW.md

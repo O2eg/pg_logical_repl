@@ -6,9 +6,10 @@ copy and apply rows. The runtime uses neither pgcopydb nor pgstream and has no
 custom WAL/DML engine.
 
 **The current version is `0.2.0`.**
-Actual coverage and test results are documented in
-[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). Unsupported settings are
-rejected; `--capabilities` lists implemented commands and limitations.
+DDL coverage and testing are documented in
+[DDL_IMPLEMENTATION.md](docs/DDL_IMPLEMENTATION.md) and [TESTING.md](docs/TESTING.md).
+Unsupported settings are rejected; `--capabilities` lists implemented commands and
+limitations.
 
 ## Installation
 

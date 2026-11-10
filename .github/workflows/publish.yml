@@ -88,7 +88,7 @@ jobs:
 
           docs = pathlib.Path(sysconfig.get_path("data")) / "share/doc/pg-logical-repl"
           for name in (
-              "README.md", "IMPLEMENTATION_STATUS.md", "docs/DDL_IMPLEMENTATION.md",
+              "README.md", "docs/DDL_IMPLEMENTATION.md",
               "docs/TESTING.md", "docs/RELEASING.md", "examples/local.yaml",
           ):
               if not (docs / name).is_file():
