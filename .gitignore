@@ -1,0 +1,65 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.pg_stand/
+.runtime/
+*.pgpass
+*.key
+.coverage
+htmlcov/
+
+# Local environments, editor files and test caches
+venv/
+.tox/
+.nox/
+.mypy_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.coverage.*
+
+# Credentials and local migration state
+.env
+.env.*
+!.env.example
+.ssh/
+/secrets/
+/credentials/
+/state/
+*.pem
+*.p12
+*.pfx
+.pgpass
+
+# Generated output and database dumps
+*.log
+*.pid
+*.dump
+*.backup
+*.sql.gz
+*.whl
+*.egg
+
+# Historical local test evidence (current runs use .runtime/)
+/docs/test_*.xml
+/docs/local_validation_*.json
+/docs/validation_benchmark_*.json
+/docs/p0_stand_cleanup_*.json
+/docs/source_rights_recheck_*.json
+/docs/spike_pg*.json
+
+# Internal design documents and historical reviews
+/todo.md
+/docs/SPEC.md
+/docs/SPEC_REVIEW.md
+/docs/OPEN_SOURCE_REVIEW.md

@@ -1,0 +1,13 @@
+[
+  {"operation": "upsert", "key": 1, "value": 7, "text": "строка'\\"},
+  {"operation": "rename_with_dml", "rollback": true},
+  {"operation": "rename_with_dml", "rollback": false},
+  {"operation": "index_queue", "present": true},
+  {"operation": "controller_reconstruction"},
+  {"operation": "pause_and_resume"},
+  {"operation": "resync"},
+  {"operation": "nullable_column", "present": true},
+  {"operation": "index_queue", "present": false},
+  {"operation": "nullable_column", "present": false},
+  {"operation": "delete", "key": 1}
+]

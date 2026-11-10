@@ -1,0 +1,76 @@
+api_version: pg_stand/v1
+kind: PostgreSQLStand
+metadata:
+  name: lc-development16
+spec:
+  docker:
+    labels:
+      io.pg-stand.profile: primary-standby-sync-logical
+    network_name: lc-development16-pg-stand-managed
+    pull_policy: missing
+  nodes:
+    logical:
+      bind_address: 127.0.0.1
+      container_name: lc-development16-logical-pg-stand-managed
+      cpu_limit: 2.0
+      memory_limit: 1g
+      pgbouncer_session_published_port: 57463
+      pgbouncer_transaction_published_port: 58463
+      published_port: 55463
+      shm_size: 512m
+      ssh_published_port: 56463
+    primary:
+      bind_address: 127.0.0.1
+      container_name: lc-development16-primary-pg-stand-managed
+      cpu_limit: 2.0
+      memory_limit: 1g
+      pgbouncer_session_published_port: 57461
+      pgbouncer_transaction_published_port: 58461
+      published_port: 55461
+      shm_size: 512m
+      ssh_published_port: 56461
+    standby:
+      bind_address: 127.0.0.1
+      container_name: lc-development16-standby-pg-stand-managed
+      cpu_limit: 2.0
+      memory_limit: 1g
+      pgbouncer_session_published_port: 57462
+      pgbouncer_transaction_published_port: 58462
+      published_port: 55462
+      shm_size: 512m
+      ssh_published_port: 56462
+  postgres:
+    initdb_args: --data-checksums --auth-host=scram-sha-256
+    parameters:
+      max_wal_size: 128MB
+      min_wal_size: 32MB
+      checkpoint_timeout: 60s
+      max_connections: 100
+      max_logical_replication_workers: 16
+      max_slot_wal_keep_size: 1GB
+      max_sync_workers_per_subscription: 3
+      max_worker_processes: 32
+      shared_buffers: 256MB
+    superuser: postgres
+    tls:
+      enabled: false
+    version: 16
+    image: pg-logical-connector/pgstand16:1.26.1
+  storage:
+    root_directory: .pg_stand/lc-development16
+  topology:
+    logical_replication:
+      copy_data: true
+      publication_name: pg_stand_all_tables
+      slot_name: pg_stand_all_tables_slot
+      subscription_name: pg_stand_all_tables_sub
+    mode: primary_standby_logical
+    replication:
+      application_name: pg_stand_sync_physical
+      hot_standby_feedback: true
+      max_replication_slots: 20
+      max_wal_senders: 10
+      mode: sync
+      username: replicator
+      wal_keep_segments: 64
+      wal_keep_size: 32MB

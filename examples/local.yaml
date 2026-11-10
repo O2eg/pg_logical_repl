@@ -1,0 +1,55 @@
+schema_version: pg_logical_connector/config-v2
+migration_id: example_migration
+state_dir: ./state/example_migration
+
+# Use newly created, dedicated databases on the owned stand.
+source:
+  admin:
+    host: 127.0.0.1
+    port: 55481
+    database: example_source
+    user: postgres
+    password_env: LC_SOURCE_PASSWORD
+    sslmode: disable
+  replication:
+    host: lc-development18-primary-pg-stand-managed
+    port: 5432
+target:
+  admin:
+    host: 127.0.0.1
+    port: 55483
+    database: example_target
+    user: postgres
+    password_env: LC_TARGET_PASSWORD
+    sslmode: disable
+
+ddl:
+  mode: frozen
+policies:
+  roles_scope: all
+  roles_passwords: required
+  existing_roles: fail_on_difference
+  replica_identity: fail
+capacity:
+  mode: external_measurements
+  evidence_file: ./capacity.json
+  max_age_seconds: 300
+limits:
+  lock_timeout_seconds: 5
+  query_timeout_seconds: 60
+  operation_timeout_seconds: 300
+daemon:
+  poll_interval_seconds: 5
+  drift_interval_seconds: 900
+  metrics_textfile: ./state/example_migration/metrics.prom
+sequences:
+  presync_interval_seconds: 300
+validation:
+  online: true
+  chunk_rows: 10000
+  max_parallel: 1
+  pause_between_chunks_ms: 50
+  max_retries: 3
+  cutover_level: checksums
+cutover:
+  analyze: never
