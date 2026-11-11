@@ -187,6 +187,15 @@ async def dispatch(args, service):
             await asyncio.sleep(service.config.get("daemon", "poll_interval_seconds", 5))
 
 
+def _requested_id(argv):
+    for index, value in enumerate(argv):
+        if value == "--request-id":
+            return next(iter(argv[index + 1 : index + 2]), None)
+        if value.startswith("--request-id="):
+            return value.partition("=")[2] or None
+    return None
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     redactor = Redactor()
@@ -201,7 +210,8 @@ def main(argv=None):
         tool="pg-logical-repl",
         tool_version=__version__,
         command=None,
-        request_id=str(uuid.uuid4()),
+        # Read before parsing so a rejected command line still echoes the caller's identifier.
+        request_id=_requested_id(argv) or str(uuid.uuid4()),
         status="succeeded",
         result=None,
         artifacts=[],

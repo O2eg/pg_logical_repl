@@ -44,6 +44,12 @@ def test_parser_errors_use_selected_contract(capsys):
     assert value["command"] == "parse"
 
 
+@pytest.mark.parametrize("option", [["--request-id", "probe"], ["--request-id=probe"]])
+def test_parser_errors_echo_the_supplied_request_id(option, capsys):
+    assert cli.main(["--contract", CONTRACT, "--machine", *option, "no-such-command"]) == 2
+    assert json.loads(capsys.readouterr().out)["request_id"] == "probe"
+
+
 @pytest.fixture
 def configuration(tmp_path):
     endpoint = dict(host="localhost", database="test", user="postgres", password_env="TEST_SECRET")
