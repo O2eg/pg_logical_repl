@@ -150,6 +150,15 @@ async def inspect(service, sc, tc, *, schema=True, barrier_passed=False):
         ),
         key=canonical,
     )
+    # Each side was checked against its own full drift baseline above. For this
+    # cross-cluster comparison only, allow the explicitly reviewed password difference.
+    for subset in (source_subset, target_subset):
+        subset["roles"] = dict(subset["roles"])
+        for name in service.config.get("policies", "preserve_role_passwords", []):
+            if subset["roles"].get(name) is not None:
+                subset["roles"][name] = {
+                    k: v for k, v in subset["roles"][name].items() if k != "password_hmac"
+                }
     if changes := difference(source_subset, target_subset):
         blockers.append("ROLES_DIFFER")
         details["roles"] = changes

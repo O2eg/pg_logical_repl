@@ -5,7 +5,7 @@ checks, schema, and the migration lifecycle; PostgreSQL `tablesync`/`apply` work
 copy and apply rows. The runtime uses neither pgcopydb nor pgstream and has no
 custom WAL/DML engine.
 
-**The current version is `0.3.0`.**
+**The current version is `0.4.0`.**
 DDL coverage and testing are documented in
 [DDL_IMPLEMENTATION.md](docs/DDL_IMPLEMENTATION.md) and [TESTING.md](docs/TESTING.md).
 Unsupported settings are rejected; `--capabilities` lists implemented commands and
@@ -25,7 +25,7 @@ package is `pg_logical_repl`. The CLI also runs as `python -m pg_logical_repl`.
 Install the 0.3 release series from PyPI:
 
 ```sh
-python -m pip install 'pg-logical-repl>=0.3.0,<0.4'
+python -m pip install 'pg-logical-repl>=0.4.0,<0.5'
 ```
 
 The wheel and source distribution include the public Markdown guides and the
@@ -116,7 +116,20 @@ on the source to read role passwords and install event triggers, and on the targ
 to restore roles and create a subscription. An empty target database does not imply
 an empty cluster: existing roles with the same names must match, including their
 password verifiers. The same plaintext password with a different SCRAM salt does
-not produce a matching verifier. The utility does not replace such roles.
+not produce a matching verifier. Independent clusters can explicitly keep the local
+credentials of named roles. For example:
+
+```yaml
+policies:
+  preserve_role_passwords: [postgres, replicator, pooler]
+```
+
+Each listed role must already exist on both clusters with matching privileges, login
+and password availability, role settings and expiry. The plan lists these roles.
+Each server keeps its own verifier, which remains part of its local drift checks.
+Other roles follow the normal exact-copy policy. Ownership, database ACLs and role
+memberships are checked as usual. An application using a preserved login needs its
+target credential when switching endpoints.
 
 `capacity.json` contains actual external measurements of free space and estimates
 of the required capacity, along with the identities of both servers:

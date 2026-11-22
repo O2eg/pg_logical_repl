@@ -1,7 +1,7 @@
 # Packaging and release
 
 The distribution and executable are `pg-logical-repl`. The Python package is
-`pg_logical_repl`; Python 3.11+ is required. The current release is `0.3.0`.
+`pg_logical_repl`; Python 3.11+ is required. The current release is `0.4.0`.
 Supported scenarios and remaining limitations are documented in
 [README.md](../README.md).
 
@@ -77,12 +77,12 @@ and [pending publisher documentation](https://docs.pypi.org/trusted-publishers/c
 2. Push the release commit and let its workflow pass. Branch pushes, pull requests
    and manual dispatch run tests/build checks without uploading to PyPI.
 3. After release approval, push the tag matching the version, for example
-   `v0.3.0`. A tag push runs the checks again and publishes the verified artifacts.
+   `v0.4.0`. A tag push runs the checks again and publishes the verified artifacts.
    A mismatched tag fails before publication; do not move a published release tag.
-4. Verify installation of the 0.3 release series from PyPI in a new environment:
+4. Verify installation of the 0.4 release series from PyPI in a new environment:
 
    ```sh
-   python -m pip install 'pg-logical-repl>=0.3.0,<0.4'
+   python -m pip install 'pg-logical-repl>=0.4.0,<0.5'
    python -m pip check
    pg-logical-repl --version
    pg-logical-repl --machine --component-capabilities

@@ -118,6 +118,8 @@ async def create(service, kind, *, out=None, extra=None):
     plan["global_roles_to_create"] = [
         r["rolname"] for r in si["roles"] if r["rolname"] not in {x["rolname"] for x in ti["roles"]}
     ]
+    if keep := service.config.get("policies", "preserve_role_passwords", []):
+        plan["passwords_preserved_on_each_cluster"] = sorted(keep)
     plan["source_replica_identity_changes"] = [
         r["schema"] + "." + r["name"]
         for r in si["relations"]

@@ -62,7 +62,7 @@ SECTIONS = {
         "contact",
     },
     "policies": set(
-        "roles_scope roles_passwords existing_roles extensions replica_identity materialized_views unlogged_tables tablespaces target_access".split()
+        "roles_scope roles_passwords preserve_role_passwords existing_roles extensions replica_identity materialized_views unlogged_tables tablespaces target_access".split()
     ),
     "limits": set(
         "lock_timeout_seconds query_timeout_seconds connect_timeout_seconds catchup_lag_seconds catchup_stable_seconds alert_lag_seconds alert_slot_retained_bytes alert_refresh_age_seconds alert_queue_age_seconds operation_timeout_seconds".split()
@@ -245,7 +245,7 @@ def load(path: str | Path) -> Config:
         "cutover": {"share_locks": bool, "analyze": str, "max_validation_age_seconds": int},
         "daemon": {key: (str if key == "metrics_textfile" else int) for key in SECTIONS["daemon"]},
         "ddl": {key: (int if key.endswith("_bytes") else str) for key in SECTIONS["ddl"]},
-        "policies": {key: str for key in SECTIONS["policies"]},
+        "policies": {key: list if key == "preserve_role_passwords" else str for key in SECTIONS["policies"]},
         "publication": {"mode": str, "include_schemas": list, "extension_tables": str},
     }
     for section, fields in types.items():
@@ -312,6 +312,17 @@ def validate_profile(raw):
         ("ddl", "unknown"): "reject",
         ("daemon", "max_parallel_index_builds"): 1,
     }
+    keep = raw.get("policies", {}).get("preserve_role_passwords", [])
+    if any(
+        not isinstance(name, str)
+        or not name.strip()
+        or "\0" in name
+        or len(name.encode()) > 63
+        or name.startswith("pg_")
+        or name == "*"
+        for name in keep
+    ) or len(set(keep)) != len(keep):
+        raise ConfigurationError("preserve_role_passwords requires distinct explicit non-system role names")
     for (section, key), value in fixed.items():
         if raw.get(section, {}).get(key, value) != value:
             raise ConfigurationError(f"Implemented profile requires {section}.{key}={value!r}")

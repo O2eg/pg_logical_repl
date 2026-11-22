@@ -187,7 +187,9 @@ class Service:
             if not await tc.fetchval("SELECT EXISTS(SELECT FROM lc.operations WHERE name='roles')"):
                 self.store.event("step_intent", step="roles")
                 async with tc.transaction():
-                    await copy_roles(sc, tc, si, self.redactor)
+                    await copy_roles(
+                        sc, tc, si, self.redactor, self.config.get("policies", "preserve_role_passwords", [])
+                    )
                     await tc.execute("INSERT INTO lc.operations(name) VALUES('roles')")
             if not await sc.fetchval(
                 "SELECT EXISTS(SELECT FROM lc.operations WHERE name='replica_identity')"

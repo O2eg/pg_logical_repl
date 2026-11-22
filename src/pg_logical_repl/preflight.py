@@ -10,6 +10,7 @@ from .catalog import inventory, public_inventory
 from .db import Database
 from .errors import PreconditionError
 from .process import tool
+from .roles import matches
 
 
 async def check(config, redactor, *, prepared=False):
@@ -259,14 +260,26 @@ async def check(config, redactor, *, prepared=False):
         )
         add("TARGET_DURABILITY", target["settings"].get("fsync") == "on", "Target fsync must be on")
     target_roles = {r["rolname"]: r for r in target["roles"]}
+    keep = set(config.get("policies", "preserve_role_passwords", []))
+    source_names = {r["rolname"] for r in source["roles"]}
+    for name in sorted(keep):
+        add(
+            "PRESERVED_ROLE:" + name,
+            name in source_names and name in target_roles,
+            "Both clusters must already own this role",
+        )
     for r in source["roles"]:
         other = target_roles.get(r["rolname"])
         if other:
-            same = all(other.get(k) == v for k, v in r.items())
+            same = matches(r, other, keep)
             add(
                 "ROLE_MATCH:" + r["rolname"],
                 same,
-                f"Existing role {r['rolname']} must match attributes and verifier",
+                (
+                    "Preserve each cluster's password and match all other role attributes"
+                    if r["rolname"] in keep
+                    else f"Existing role {r['rolname']} must match attributes and verifier"
+                ),
             )
     evidence = config.get("capacity", "evidence_file")
     ok = False

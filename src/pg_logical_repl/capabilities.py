@@ -94,6 +94,7 @@ def describe():
         commands=commands,
         integrity=dict(
             roles=True,
+            preserve_role_passwords=True,
             password_verifiers=True,
             membership=True,
             schema=True,

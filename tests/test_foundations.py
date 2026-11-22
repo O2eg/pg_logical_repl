@@ -9,6 +9,7 @@ from pg_logical_repl.config import canonical, load
 from pg_logical_repl.ddl import classify
 from pg_logical_repl.errors import ConfigurationError, ConnectorError, OwnershipError, PreconditionError
 from pg_logical_repl.process import execute
+from pg_logical_repl.roles import matches
 from pg_logical_repl.security import Redactor, private_file
 from pg_logical_repl.state import Store, write_private
 
@@ -28,6 +29,22 @@ def config(tmp_path, **changes):
     path = tmp_path / "config.yaml"
     path.write_text(yaml.safe_dump(value))
     return path
+
+
+def test_existing_cluster_passwords_are_explicit_and_keep_other_checks(tmp_path):
+    assert load(config(tmp_path, policies={"preserve_role_passwords": ["pooler"]})).get(
+        "policies", "preserve_role_passwords"
+    ) == ["pooler"]
+    source = dict(rolname="pooler", rolpassword="source-verifier", rolsuper=False)
+    target = dict(source, rolpassword="target-verifier")
+    assert not matches(source, target, ())
+    assert not matches(source, target, {"app"})
+    assert matches(source, target, {"pooler"})
+    assert not matches(source, dict(target, rolsuper=True), {"pooler"})
+    assert not matches(source, dict(target, rolpassword=None), {"pooler"})
+    for invalid in (["pooler", "pooler"], ["*"], [False], [[]], ["pg_monitor"], [""], "all"):
+        with pytest.raises(ConfigurationError):
+            load(config(tmp_path, policies={"preserve_role_passwords": invalid}))
 
 
 def test_reject_duplicate_and_inline_secrets(tmp_path):

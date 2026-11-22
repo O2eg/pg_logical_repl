@@ -26,8 +26,25 @@ async def target_memberships(source, memberships, source_major, target_major):
     return [dict(m, inherit_option=inherit[m["member"]], set_option=True) for m in memberships]
 
 
-async def copy_roles(source, target, source_inventory, redactor):
+def matches(source, target, keep):
+    """Only the verifier may differ for an explicitly named role present on both sides."""
+    if source["rolname"] not in keep:
+        return source == target
+    return (
+        "rolpassword" in source
+        and "rolpassword" in target
+        and (source["rolpassword"] is None) == (target["rolpassword"] is None)
+        and {k: v for k, v in source.items() if k != "rolpassword"}
+        == {k: v for k, v in target.items() if k != "rolpassword"}
+    )
+
+
+async def copy_roles(source, target, source_inventory, redactor, keep=()):
     existing = {r["rolname"] for r in await target.fetch("SELECT rolname FROM pg_roles")}
+    if set(keep) - (existing & {r["rolname"] for r in source_inventory["roles"]}):
+        raise PreconditionError(
+            "PRESERVED_ROLE_MISSING", "Explicitly preserved roles must exist on both clusters"
+        )
     for r in source_inventory["roles"]:
         if r["rolname"] in existing:
             continue
