@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import asyncpg
 
 from .config import digest
@@ -248,12 +250,48 @@ async def inventory(c, *, include_passwords=False):
     )
 
 
-def schema_manifest(inv):
+def comparable_acl(row, source_major):
+    grants = json.loads(row["acl"]) if row["acl"] is not None else []
+    if source_major < 17:
+        # PG17 adds MAINTAIN to a fully privileged owner. Preserve every grant
+        # to another role and any owner ACL with individually revoked privileges.
+        owner_grants = [
+            g for g in grants if g["grantor"] == g["grantee"] == row["owner"] and not g["grantable"]
+        ]
+        old_privileges = {"SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"}
+        if old_privileges <= {g["privilege"] for g in owner_grants}:
+            grants = [g for g in grants if g not in owner_grants or g["privilege"] != "MAINTAIN"]
+    return grants
+
+
+def schema_manifest(inv, *, source_major=None):
     relations = []
     for row in inv["relations"]:
         if row["extension"]:
             continue
-        relations.append({k: v for k, v in row.items() if k not in {"oid", "bytes", "populated"}})
+        rel = {k: v for k, v in row.items() if k not in {"oid", "bytes", "populated"}}
+        if source_major is not None:
+            rel["acl"] = comparable_acl(rel, source_major)
+            if inv["identity"]["major"] == 18 and source_major < 18:
+                # PG18 catalogs each NOT NULL separately. Its equivalent on PG16
+                # is attnotnull, which remains part of the column comparison.
+                plain = {
+                    "NOT NULL " + name
+                    for col in rel["columns"]
+                    if col["attnotnull"]
+                    for name in (col["attname"], '"' + col["attname"].replace('"', '""') + '"')
+                }
+                rel["constraints"] = [
+                    c
+                    for c in rel["constraints"]
+                    if not (
+                        c["contype"] == "n"
+                        and c["convalidated"]
+                        and c["comment"] is None
+                        and c["definition"] in plain
+                    )
+                ]
+        relations.append(rel)
     return dict(
         relations=relations,
         functions=inv["functions"],
@@ -264,6 +302,14 @@ def schema_manifest(inv):
         database=inv["database"],
         role_settings=inv["role_settings"],
         unsupported_objects=inv["unsupported_objects"],
+    )
+
+
+def schema_differences(source, target):
+    major = source["identity"]["major"]
+    reference = major if major != target["identity"]["major"] else None
+    return difference(
+        schema_manifest(source, source_major=reference), schema_manifest(target, source_major=reference)
     )
 
 

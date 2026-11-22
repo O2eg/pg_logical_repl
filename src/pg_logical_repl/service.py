@@ -183,7 +183,7 @@ class Service:
                 raise PreconditionError(
                     "PREPARE_SOURCE_DRIFT", "Source changed outside the approved preparation steps"
                 )
-            major = si["identity"]["major"]
+            major = plan["target"]["identity"]["major"]
             if not await tc.fetchval("SELECT EXISTS(SELECT FROM lc.operations WHERE name='roles')"):
                 self.store.event("step_intent", step="roles")
                 async with tc.transaction():
@@ -368,7 +368,7 @@ class Service:
                     + " PUBLICATION "
                     + qi(self.config.publication)
                     + " WITH (streaming=on, binary=false, synchronous_commit=on, enabled=false"
-                    + (", run_as_owner=true" if self.store.read()["source_identity"]["major"] >= 16 else "")
+                    + (", run_as_owner=true" if self.store.read()["target_identity"]["major"] >= 16 else "")
                     + ")"
                 )
                 existing = await tc.fetchrow(
@@ -582,7 +582,7 @@ class Service:
                         if not await tc.fetchval(
                             "SELECT EXISTS(SELECT FROM lc.operations WHERE name='post')"
                         ):
-                            await schema.restore(self, s["source_identity"]["major"], "post")
+                            await schema.restore(self, s["target_identity"]["major"], "post")
                         await self.state("CATCHING_UP", sc, tc)
                         await self.barrier(sc, tc)
                         await integrity.require(self, sc, tc)

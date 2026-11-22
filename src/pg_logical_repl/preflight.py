@@ -5,8 +5,11 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 
+from .capabilities import supports_pair
 from .catalog import inventory, public_inventory
 from .db import Database
+from .errors import PreconditionError
+from .process import tool
 
 
 async def check(config, redactor, *, prepared=False):
@@ -96,10 +99,19 @@ async def check(config, redactor, *, prepared=False):
 
     si, ti = source["identity"], target["identity"]
     add(
-        "SAME_MAJOR",
-        si["major"] == ti["major"] and si["major"] in (15, 16, 17, 18),
-        "Source and target must have the same major, 15–18",
+        "SUPPORTED_MAJOR_PAIR",
+        supports_pair(si["major"], ti["major"]),
+        f"PostgreSQL {si['major']} -> {ti['major']}; see --capabilities for supported directions",
     )
+    if si["major"] != ti["major"] and supports_pair(si["major"], ti["major"]):
+        add("CROSS_MAJOR_DDL", config.ddl_mode == "frozen", "Cross-major replication requires frozen DDL")
+        for name in ("pg_dump", "pg_restore", "psql"):
+            try:
+                path = tool(config, ti["major"], name)
+            except PreconditionError as exc:
+                add("TARGET_TOOL:" + name, False, str(exc))
+            else:
+                add("TARGET_TOOL:" + name, True, path)
     add(
         "IDENTITY_KNOWN",
         bool(si["system_identifier"] and ti["system_identifier"]),

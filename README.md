@@ -5,7 +5,7 @@ checks, schema, and the migration lifecycle; PostgreSQL `tablesync`/`apply` work
 copy and apply rows. The runtime uses neither pgcopydb nor pgstream and has no
 custom WAL/DML engine.
 
-**The current version is `0.2.0`.**
+**The current version is `0.3.0`.**
 DDL coverage and testing are documented in
 [DDL_IMPLEMENTATION.md](docs/DDL_IMPLEMENTATION.md) and [TESTING.md](docs/TESTING.md).
 Unsupported settings are rejected; `--capabilities` lists implemented commands and
@@ -22,10 +22,10 @@ python3.11 -m venv .venv
 The pip distribution and CLI command are named `pg-logical-repl`; the Python
 package is `pg_logical_repl`. The CLI also runs as `python -m pg_logical_repl`.
 
-Install the 0.2 release series from PyPI:
+Install the 0.3 release series from PyPI:
 
 ```sh
-python -m pip install 'pg-logical-repl>=0.2.0,<0.3'
+python -m pip install 'pg-logical-repl>=0.3.0,<0.4'
 ```
 
 The wheel and source distribution include the public Markdown guides and the
@@ -53,8 +53,24 @@ release without this baseline receives `INTEGRITY_BASELINE_MISSING`; current rol
 and resources are not automatically accepted as a baseline. Finish an interrupted
 older migration using its corresponding version of the utility.
 
-`pg_dump`, `pg_restore`, and `psql` must match the major version of both databases.
-Their paths can be configured in `client_tools.bin_dirs`. Passwords are referenced
+## PostgreSQL version pairs
+
+The publisher and subscriber can run the same major (15–18). For a logical upgrade,
+use a newer subscriber: 15 → 16/17/18, 16 → 17/18, or 17 → 18. Set
+`ddl.mode: frozen` during a cross-major migration. Application DML continues through
+the native text subscription. The preflight checks the direction, target client
+tools, locale, roles and extension versions before preparing either database.
+Inspect `pg-logical-repl --machine --capabilities` for the list of allowed pairs.
+
+For example, for PG16 → PG18 point `source` at PG16, `target` at an empty PG18
+database and `client_tools.bin_dirs["18"]` at the PG18 binaries on the CLI host.
+Use the normal prepare/start workflow. Wait for `REPLICATING`, run `verify --level full`,
+fence application writes, then finalize and commit cutover before switching clients.
+Finalize synchronizes sequences and deferred objects. Compare application-specific
+extensions and queries separately. [PostgreSQL logical replication restrictions](https://www.postgresql.org/docs/18/logical-replication-restrictions.html)
+
+`pg_dump`, `pg_restore`, and `psql` use the **subscriber's** major version.
+Configure their paths in `client_tools.bin_dirs`. Passwords are referenced
 through environment variables, a file with mode `0600`, or pgpass. Do not put
 passwords in YAML or command arguments. Internal files use mode `0600`; the state
 directory uses `0700`.

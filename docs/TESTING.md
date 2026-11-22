@@ -134,7 +134,12 @@ replay path itself; it is not a recording of an incident in a user's environment
 ## Scope of the evidence
 
 Passing tests confirms the exercised scenarios on the specified versions and
-sizes. A same-major matrix does not validate migrations between major versions.
+sizes. Cross-major acceptance uses distinct primaries, frozen DDL, a primary key,
+an identity sequence and an explicit read-only grant. For each forward pair
+from PG15–18, compare initial rows, commit INSERT/UPDATE/DELETE on the source,
+wait for the rows on the subscriber, verify, fence the sole writer, finalize and
+commit cutover, then insert on the subscriber and check the next identity value.
+Exercise downgrades separately as negative preflight cases.
 Sequence shrinking does not replace testing every DDL, object, and type category.
 Local TCP faults do not cover DNS, TLS, primary changes, or a physical node reboot;
 a separate earlier test restarts the logical container. Multi-terabyte datasets,

@@ -4,9 +4,10 @@ import hmac
 import json
 from contextlib import asynccontextmanager
 
-from .catalog import difference, inventory, schema_manifest
+from .catalog import difference, inventory, schema_differences
 from .config import canonical, digest
 from .errors import PreconditionError
+from .roles import target_memberships
 from .state import now, write_private
 
 
@@ -140,6 +141,15 @@ async def inspect(service, sc, tc, *, schema=True, barrier_passed=False):
         views["source"],
         memberships=[r for r in views["source"]["memberships"] if r["role"] in names or r["member"] in names],
     )
+    source_subset["memberships"] = sorted(
+        await target_memberships(
+            sc,
+            source_subset["memberships"],
+            inventories["source"]["identity"]["major"],
+            inventories["target"]["identity"]["major"],
+        ),
+        key=canonical,
+    )
     if changes := difference(source_subset, target_subset):
         blockers.append("ROLES_DIFFER")
         details["roles"] = changes
@@ -153,7 +163,7 @@ async def inspect(service, sc, tc, *, schema=True, barrier_passed=False):
         blockers.append("DDL_JOURNAL_MISMATCH")
     # A DDL transaction or an unfinished queue is an expected temporary divergence.
     if schema and settled:
-        changes = difference(schema_manifest(inventories["source"]), schema_manifest(inventories["target"]))
+        changes = schema_differences(inventories["source"], inventories["target"])
         if changes:
             blockers.append("SCHEMA_DRIFT")
             details["schema"] = changes

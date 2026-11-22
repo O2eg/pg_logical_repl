@@ -5,7 +5,7 @@ import json
 import uuid
 from contextlib import asynccontextmanager
 
-from .catalog import difference, fingerprint, inventory, schema_manifest
+from .catalog import inventory, schema_differences
 from .errors import PreconditionError
 from .security import identifier as qi
 from .security import qualified as qn
@@ -243,7 +243,8 @@ async def verify(service, sc, tc, *, include_deferred=False, level=None, table=N
     if level not in {"counts", "checksums", "full"}:
         raise PreconditionError("VALIDATION_LEVEL", "Expected counts, checksums or full")
     si, ti = await inventory(sc), await inventory(tc)
-    schema_ok = fingerprint(si) == fingerprint(ti)
+    differences = schema_differences(si, ti)
+    schema_ok = not differences
     relations = [
         r
         for r in si["relations"]
@@ -300,7 +301,7 @@ async def verify(service, sc, tc, *, include_deferred=False, level=None, table=N
     result = dict(
         checked_at=now(),
         schema_equal=schema_ok,
-        schema_differences=difference(schema_manifest(si), schema_manifest(ti)),
+        schema_differences=differences,
         tables=sorted(results, key=lambda r: r["table"]),
         passed=schema_ok and all(r["passed"] for r in results),
         level=level,

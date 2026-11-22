@@ -49,7 +49,7 @@ async def observe(service, sc, tc, *, allow_disabled=False, ignore_history=False
             and sub["substream"] in {"t", "true"}
             and sub["subsynccommit"] == "on"
             and not sub["subdisableonerr"]
-            and (state["source_identity"]["major"] < 16 or sub["run_as_owner"] == "true")
+            and (state["target_identity"]["major"] < 16 or sub["run_as_owner"] == "true")
             and sub["subconninfo"] == conninfo(values),
             "SUBSCRIPTION_CONFIGURATION_CHANGED",
         )

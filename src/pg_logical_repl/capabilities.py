@@ -1,5 +1,12 @@
 """Machine-readable implemented surface; planned features are explicit."""
 
+SAME_MAJOR_VERSIONS = (15, 16, 17, 18)
+CROSS_MAJOR_PAIRS = tuple((s, t) for s in SAME_MAJOR_VERSIONS for t in SAME_MAJOR_VERSIONS if s < t)
+
+
+def supports_pair(source, target):
+    return (source == target and source in SAME_MAJOR_VERSIONS) or (source, target) in CROSS_MAJOR_PAIRS
+
 
 def describe():
     commands = {}
@@ -70,7 +77,8 @@ def describe():
     return dict(
         schema_version="pg_logical_connector/capabilities-v2",
         maturity="development",
-        same_major_versions=[15, 16, 17, 18],
+        same_major_versions=list(SAME_MAJOR_VERSIONS),
+        cross_major_pairs=[dict(source=s, target=t, ddl_modes=["frozen"]) for s, t in CROSS_MAJOR_PAIRS],
         data_plane="PostgreSQL pgoutput/publication/subscription",
         validation=dict(
             execution="postgresql_aggregates",

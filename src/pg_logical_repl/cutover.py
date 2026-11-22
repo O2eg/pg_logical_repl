@@ -57,7 +57,7 @@ async def locked_source(service, sc):
 
 async def deferred_copy(service, sc, tc):
     si = await inventory(sc)
-    major = si["identity"]["major"]
+    major = service.store.read()["target_identity"]["major"]
     unlogged = [
         r for r in si["relations"] if r["kind"] == "r" and r["persistence"] == "u" and not r["extension"]
     ]
@@ -66,6 +66,7 @@ async def deferred_copy(service, sc, tc):
     args = [
         tool(service.config, major, "pg_dump"),
         "--format=custom",
+        "--quote-all-identifiers",
         "--data-only",
         "-b",
         "--file=" + str(archive),

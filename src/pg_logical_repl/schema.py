@@ -14,6 +14,7 @@ async def dump_schema(service, major):
             [
                 tool(service.config, major, "pg_dump"),
                 "--format=custom",
+                "--quote-all-identifiers",
                 "--schema-only",
                 "--exclude-schema=lc",
                 "--no-publications",

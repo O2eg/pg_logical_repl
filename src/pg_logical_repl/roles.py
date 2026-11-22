@@ -15,6 +15,17 @@ FLAGS = {
 }
 
 
+async def target_memberships(source, memberships, source_major, target_major):
+    if source_major >= 16 or target_major < 16:
+        return memberships
+    # Before PG16 inheritance was determined by the member role, and SET ROLE
+    # was available for each membership. PG16 stores both choices per grant.
+    inherit = {
+        r["rolname"]: r["rolinherit"] for r in await source.fetch("SELECT rolname,rolinherit FROM pg_roles")
+    }
+    return [dict(m, inherit_option=inherit[m["member"]], set_option=True) for m in memberships]
+
+
 async def copy_roles(source, target, source_inventory, redactor):
     existing = {r["rolname"] for r in await target.fetch("SELECT rolname FROM pg_roles")}
     for r in source_inventory["roles"]:
@@ -33,7 +44,10 @@ async def copy_roles(source, target, source_inventory, redactor):
             key, value = setting.split("=", 1)
             await target.execute("ALTER ROLE " + qi(r["rolname"]) + " SET " + qi(key) + " TO " + ql(value))
     target_major = int(await target.fetchval("SHOW server_version_num")) // 10000
-    for m in source_inventory["memberships"]:
+    memberships = await target_memberships(
+        source, source_inventory["memberships"], source_inventory["identity"]["major"], target_major
+    )
+    for m in memberships:
         current = await target.fetchrow(
             """SELECT admin_option,pg_get_userbyid(grantor) AS grantor
             FROM pg_auth_members WHERE roleid=(SELECT oid FROM pg_roles WHERE rolname=$1)
