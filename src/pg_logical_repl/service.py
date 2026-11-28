@@ -468,13 +468,12 @@ class Service:
                         sub["oid"],
                     )
                 ]
-                result["errors"] = [
-                    dict(r)
-                    for r in await tc.fetch(
-                        "SELECT apply_error_count,sync_error_count FROM pg_stat_subscription_stats WHERE subid=$1",
-                        sub["oid"],
-                    )
-                ]
+                errors = await health.subscription_stats(tc, sub["oid"])
+                result["errors"] = (
+                    [{key: errors[key] for key in ("apply_error_count", "sync_error_count")}]
+                    if errors
+                    else []
+                )
             result["slot"] = [
                 dict(r)
                 for r in await sc.fetch(

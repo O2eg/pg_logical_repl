@@ -11,6 +11,7 @@ from pathlib import Path
 import rfc8785
 import yaml
 
+from .capabilities import SAME_MAJOR_VERSIONS
 from .errors import ConfigurationError
 
 
@@ -266,7 +267,7 @@ def load(path: str | Path) -> Config:
             raise ConfigurationError("Invalid subscription." + key)
     if "client_tools" in raw:
         directories = raw["client_tools"].get("bin_dirs", {})
-        keys(directories, {"15", "16", "17", "18"}, "client_tools.bin_dirs")
+        keys(directories, {str(major) for major in SAME_MAJOR_VERSIONS}, "client_tools.bin_dirs")
         if any(not isinstance(v, str) or not v for v in directories.values()):
             raise ConfigurationError("Client tool paths must be strings")
     if any(not isinstance(v, str) or not v for v in raw.get("publication", {}).get("include_schemas", [])):

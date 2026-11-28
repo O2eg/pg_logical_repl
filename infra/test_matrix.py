@@ -14,8 +14,8 @@ import asyncpg
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pg-stand", required=True, help="Path to installed pg-stand CLI")
-    parser.add_argument("--current-major", type=int, choices=[15, 16, 17, 18], default=18)
-    parser.add_argument("--major", type=int, choices=[15, 16, 17, 18], action="append", dest="majors")
+    parser.add_argument("--current-major", type=int, choices=[15, 16, 17, 18, 19], default=18)
+    parser.add_argument("--major", type=int, choices=[15, 16, 17, 18, 19], action="append", dest="majors")
     parser.add_argument("--pytest-filter", default="")
     parser.add_argument("--junit-prefix", default="test")
     parser.add_argument("--artifacts-dir", type=Path, default=Path(".runtime/test-matrix"))
@@ -151,7 +151,7 @@ def main():
                 await c.close()
 
     try:
-        for major in args.majors or [15, 16, 17, 18]:
+        for major in args.majors or [15, 16, 17, 18, 19]:
             if current != major:
                 stand(current, "stop")
                 current = major

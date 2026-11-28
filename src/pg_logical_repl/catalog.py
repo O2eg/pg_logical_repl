@@ -272,7 +272,7 @@ def schema_manifest(inv, *, source_major=None):
         rel = {k: v for k, v in row.items() if k not in {"oid", "bytes", "populated"}}
         if source_major is not None:
             rel["acl"] = comparable_acl(rel, source_major)
-            if inv["identity"]["major"] == 18 and source_major < 18:
+            if inv["identity"]["major"] >= 18 and source_major < 18:
                 # PG18 catalogs each NOT NULL separately. Its equivalent on PG16
                 # is attnotnull, which remains part of the column comparison.
                 plain = {

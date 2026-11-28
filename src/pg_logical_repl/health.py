@@ -11,6 +11,20 @@ from .state import now
 ERROR_WINDOW_SECONDS = 300
 
 
+async def subscription_stats(connection, oid):
+    # PG19 distinguishes sequence synchronization failures from table failures.
+    return await connection.fetchrow(
+        """SELECT apply_error_count,
+        coalesce((stats->>'sync_error_count')::bigint,
+            coalesce((stats->>'sync_seq_error_count')::bigint, 0) +
+            coalesce((stats->>'sync_table_error_count')::bigint, 0)) AS sync_error_count,
+        stats AS all_stats
+        FROM (SELECT apply_error_count, to_jsonb(s) AS stats FROM pg_stat_subscription_stats s
+            WHERE subid=$1) AS subscription""",
+        oid,
+    )
+
+
 async def require_healthy(service, sc, tc):
     result = await observe(service, sc, tc)
     if result["blockers"]:
@@ -53,10 +67,7 @@ async def observe(service, sc, tc, *, allow_disabled=False, ignore_history=False
             and sub["subconninfo"] == conninfo(values),
             "SUBSCRIPTION_CONFIGURATION_CHANGED",
         )
-        errors = await tc.fetchrow(
-            "SELECT apply_error_count,sync_error_count,to_jsonb(s) AS all_stats FROM pg_stat_subscription_stats s WHERE subid=$1",
-            sub["oid"],
-        )
+        errors = await subscription_stats(tc, sub["oid"])
     pub = await sc.fetchrow(
         """SELECT oid::int,puballtables,pubinsert,pubupdate,pubdelete,pubtruncate,pubviaroot
         FROM pg_publication WHERE pubname=$1""",

@@ -55,8 +55,8 @@ older migration using its corresponding version of the utility.
 
 ## PostgreSQL version pairs
 
-The publisher and subscriber can run the same major (15–18). For a logical upgrade,
-use a newer subscriber: 15 → 16/17/18, 16 → 17/18, or 17 → 18. Set
+The publisher and subscriber can run the same major (15–19). For a logical upgrade,
+use a newer subscriber in the supported range. Set
 `ddl.mode: frozen` during a cross-major migration. Application DML continues through
 the native text subscription. The preflight checks the direction, target client
 tools, locale, roles and extension versions before preparing either database.
@@ -395,7 +395,7 @@ is not deleted.
 
 ## Local testing
 
-The `infra/pg15.yaml` … `infra/pg18.yaml` environments use pg-stand. Only one profile
+The `infra/pg15.yaml` … `infra/pg19.yaml` environments use pg-stand. Only one profile
 is active at a time; unrelated Docker containers are not affected.
 
 ```sh

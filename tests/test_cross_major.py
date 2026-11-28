@@ -12,10 +12,10 @@ from pg_logical_repl.roles import target_memberships
 def test_advertised_directions_match_preflight():
     caps = describe()
     pairs = {(p["source"], p["target"]) for p in caps["cross_major_pairs"] if p["ddl_modes"] == ["frozen"]}
-    for source in range(14, 20):
-        for target in range(14, 20):
-            assert supports_pair(source, target) == (15 <= source <= target <= 18)
-            assert ((source, target) in pairs) == (15 <= source < target <= 18)
+    for source in range(14, 21):
+        for target in range(14, 21):
+            assert supports_pair(source, target) == (15 <= source <= target <= 19)
+            assert ((source, target) in pairs) == (15 <= source < target <= 19)
 
 
 def inventory(major):
@@ -29,7 +29,7 @@ def inventory(major):
         columns=[dict(attname="amount", attnotnull=True)],
         acl=json.dumps(grants),
         constraints=[dict(contype="n", definition="NOT NULL amount", convalidated=True, comment=None)]
-        if major == 18
+        if major >= 18
         else [],
     )
     return dict(
@@ -46,8 +46,9 @@ def inventory(major):
     )
 
 
-def test_catalog_only_normalizes_expected_cross_version_differences():
-    source, target = inventory(16), inventory(18)
+@pytest.mark.parametrize("target_major", [18, 19])
+def test_catalog_only_normalizes_expected_cross_version_differences(target_major):
+    source, target = inventory(16), inventory(target_major)
     assert schema_differences(source, target) == []
     rel = target["relations"][0]
     rel["constraints"][0]["convalidated"] = False
@@ -60,7 +61,7 @@ def test_catalog_only_normalizes_expected_cross_version_differences():
     grants.append(dict(grantor="owner", grantee="reader", privilege="MAINTAIN", grantable=False))
     rel["acl"] = json.dumps(grants)
     assert schema_differences(source, target)
-    assert schema_differences(inventory(18), target)
+    assert schema_differences(inventory(target_major), target)
 
 
 @pytest.mark.asyncio

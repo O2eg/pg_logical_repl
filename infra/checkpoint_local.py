@@ -10,7 +10,7 @@ import asyncpg
 
 async def main():
     major = int(sys.argv[1])
-    assert major in (15, 16, 17, 18)
+    assert major in (15, 16, 17, 18, 19)
     root = Path(__file__).resolve().parents[1]
     creds = json.loads((root / ".pg_stand/credentials/database/passwords.json").read_text())["superuser"]
     for cycle in range(2):

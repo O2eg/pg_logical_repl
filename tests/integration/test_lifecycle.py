@@ -430,7 +430,8 @@ async def test_validation_quoted_key_with_nonstandard_string_setting(migration):
     for c in (sc, tc):
         await c.execute("CREATE TABLE unusual(" + qi(key) + " bigint PRIMARY KEY,payload text)")
         await c.execute("INSERT INTO unusual VALUES(1,'payload'),(2,'payload2')")
-        await c.execute("SET standard_conforming_strings=off")
+        if MAJOR < 19:
+            await c.execute("SET standard_conforming_strings=off")
     relation = next(r for r in (await validation.inventory(sc))["relations"] if r["name"] == "unusual")
     service.config.raw["validation"] = dict(chunk_rows=1, pause_between_chunks_ms=0)
     result = await validation.verify_table(service, sc, tc, relation, "checksums", False, lambda _: None)

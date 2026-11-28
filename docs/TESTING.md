@@ -1,6 +1,6 @@
 # Correctness and recovery testing
 
-Tests run in dedicated environments defined by `infra/pg15.yaml` … `infra/pg18.yaml`.
+Tests run in dedicated environments defined by `infra/pg15.yaml` … `infra/pg19.yaml`.
 Each version needs a source primary, its synchronous physical standby, and an
 independent logical target. Linux, Docker, pg-stand, Python 3.11+, and matching
 versions of `pg_dump`/`pg_restore` are required. Credentials are read from

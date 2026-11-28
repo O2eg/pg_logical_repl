@@ -1,6 +1,6 @@
 """Machine-readable implemented surface; planned features are explicit."""
 
-SAME_MAJOR_VERSIONS = (15, 16, 17, 18)
+SAME_MAJOR_VERSIONS = (15, 16, 17, 18, 19)
 CROSS_MAJOR_PAIRS = tuple((s, t) for s in SAME_MAJOR_VERSIONS for t in SAME_MAJOR_VERSIONS if s < t)
 
 

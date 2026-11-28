@@ -1,7 +1,7 @@
 # Packaging and release
 
 The distribution and executable are `pg-logical-repl`. The Python package is
-`pg_logical_repl`; Python 3.11+ is required. The current release is `0.4.0`.
+`pg_logical_repl`; Python 3.11+ is required. The current release is `0.4.1`.
 Supported scenarios and remaining limitations are documented in
 [README.md](../README.md).
 

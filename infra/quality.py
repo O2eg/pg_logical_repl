@@ -23,8 +23,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=("quick", "matrix", "soak", "replay"), default="quick")
     parser.add_argument("--pg-stand", required=True, help="Installed pg-stand CLI")
-    parser.add_argument("--major", type=int, choices=(15, 16, 17, 18), action="append")
-    parser.add_argument("--current-major", type=int, choices=(15, 16, 17, 18), default=18)
+    parser.add_argument("--major", type=int, choices=(15, 16, 17, 18, 19), action="append")
+    parser.add_argument("--current-major", type=int, choices=(15, 16, 17, 18, 19), default=18)
     parser.add_argument("--existing-containers", action="store_true")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--examples", type=int, default=6)
@@ -57,7 +57,7 @@ def run(args, parent):
     started = time.monotonic()
     directory = Path(tempfile.mkdtemp(prefix=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-"), dir=parent))
     seed = args.seed if args.seed is not None else secrets.randbits(64)
-    majors = args.major or ([15, 16, 17, 18] if args.profile == "matrix" else [18])
+    majors = args.major or ([15, 16, 17, 18, 19] if args.profile == "matrix" else [18])
     report = dict(
         profile=args.profile,
         started_at=datetime.now(UTC).isoformat(),
